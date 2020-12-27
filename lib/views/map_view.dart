@@ -1,8 +1,14 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_maps/model/gsheetmodel.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
+
+import 'package:location/location.dart';
 
 // ignore: camel_case_types
 class Maper_View extends StatefulWidget {
@@ -14,9 +20,12 @@ class Maper_View extends StatefulWidget {
 class _Maper_ViewState extends State<Maper_View> {
   List gshetMarker = [];
   List<Marker> allMarker = [];
-  // GoogleMapController _controller;
+  StreamSubscription _locationSubscription;
+  Location _locationTracker = Location();
+  GoogleMapController _controller;
+  Circle circle;
 
-  getlocationfromSheet() async {
+  getlocationfromSheet(Uint8List imageData) async {
     var raw = await http.get(
         "https://script.google.com/macros/s/AKfycbxDPzsgvKfkSpAO4m0WN8S-JkWcAiYOuknPJ4qpg0OipyfvADwrSMAA/exec");
     var jsonmarker = convert.jsonDecode(raw.body);
@@ -26,6 +35,8 @@ class _Maper_ViewState extends State<Maper_View> {
     jsonmarker.forEach((element) {
       allMarker.add(Marker(
           markerId: MarkerId(element["marker_id"]),
+          icon: BitmapDescriptor.fromBytes(imageData),
+          anchor: Offset(0.5, 0.5),
           position: LatLng(element["y"], element["x"]),
           draggable: false));
 
@@ -34,10 +45,64 @@ class _Maper_ViewState extends State<Maper_View> {
     print("finished");
   }
 
+  Future<Uint8List> getMarker() async {
+    ByteData byteData =
+        await DefaultAssetBundle.of(context).load("assets/pothole.png");
+    return byteData.buffer.asUint8List();
+  }
+
+  void updateCircle(LocationData newLocalData, Uint8List imageData) {
+    LatLng latlng = LatLng(newLocalData.latitude, newLocalData.longitude);
+    this.setState(() {
+      circle = Circle(
+          circleId: CircleId("car"),
+          radius: newLocalData.accuracy,
+          zIndex: 1,
+          strokeColor: Colors.black,
+          center: latlng,
+          fillColor: Colors.red);
+    });
+  }
+
+  void getCurrentLocation() async {
+    try {
+      Uint8List imageData = await getMarker();
+      var location = await _locationTracker.getLocation();
+
+      updateCircle(location, imageData);
+
+      if (_locationSubscription != null) {
+        _locationSubscription.cancel();
+      }
+
+      _locationSubscription =
+          _locationTracker.onLocationChanged().listen((newLocalData) {
+        if (_controller != null) {
+          _controller.animateCamera(CameraUpdate.newCameraPosition(
+              new CameraPosition(
+                  bearing: 192.8334901395799,
+                  target: LatLng(newLocalData.latitude, newLocalData.longitude),
+                  tilt: 0,
+                  zoom: 18.00)));
+          updateCircle(newLocalData, imageData);
+        }
+      });
+    } on PlatformException catch (e) {
+      if (e.code == 'PERMISSION_DENIED') {
+        debugPrint("Permission Denied");
+      }
+    }
+  }
+
+  void imageVaruthanulla() async {
+    Uint8List imageData = await getMarker();
+    getlocationfromSheet(imageData);
+  }
+
   @override
   void initState() {
     super.initState();
-    getlocationfromSheet();
+    imageVaruthanulla();
     // print(allMarker);
   }
 
@@ -50,7 +115,8 @@ class _Maper_ViewState extends State<Maper_View> {
             icon: const Icon(Icons.refresh),
             onPressed: () {
               setState(() {
-                getlocationfromSheet();
+                imageVaruthanulla();
+
                 print(allMarker);
               });
             },
@@ -68,11 +134,18 @@ class _Maper_ViewState extends State<Maper_View> {
                 target: LatLng(20.5937, 78.9629),
               ),
               markers: Set.from(allMarker),
+
+              circles: Set.from((circle != null) ? [circle] : []),
               //   onMapCreated: mapCreated,
             ),
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.location_searching),
+          onPressed: () {
+            getCurrentLocation();
+          }),
     );
   }
 }
