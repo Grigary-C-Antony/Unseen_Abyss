@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_maps/essentials.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_maps/model/gsheetmodel.dart';
 import 'package:http/http.dart' as http;
@@ -109,43 +110,74 @@ class _Maper_ViewState extends State<Maper_View> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                imageVaruthanulla();
-
-                print(allMarker);
-              });
-            },
-          ),
-        ],
-        title: Text("maps"),
-      ),
-      body: Stack(
+      // appBar: AppBar(
+      //   actions: <Widget>[
+      //     IconButton(
+      //       icon: const Icon(Icons.refresh),
+      //       onPressed: () {},
+      //     ),
+      //   ],
+      //   title: Text("maps"),
+      // ),
+      body: Column(
         children: [
-          Container(
-            height: MediaQuery.of(context).size.height,
-            width: MediaQuery.of(context).size.width,
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: LatLng(20.5937, 78.9629),
-              ),
-              markers: Set.from(allMarker),
+          Stack(
+            children: [
+              Container(
+                height: MediaQuery.of(context).size.height / 1.12,
+                width: MediaQuery.of(context).size.width,
+                child: GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(20.5937, 78.9629),
+                  ),
+                  markers: Set.from(allMarker),
 
-              circles: Set.from((circle != null) ? [circle] : []),
-              //   onMapCreated: mapCreated,
-            ),
+                  circles: Set.from((circle != null) ? [circle] : []),
+                  //   onMapCreated: mapCreated,
+                ),
+              ),
+
+              // Padding(
+              //   padding: EdgeInsets.only(
+              //       top: MediaQuery.of(context).size.height -
+              //           MediaQuery.of(context).size.height / 5),
+              //   child: FloatingActionButton(
+              //     onPressed: () {
+              //       setState(() {
+              //         imageVaruthanulla();
+
+              //         print(allMarker);
+              //       });
+              //     },
+              //     child: Icon(Icons.refresh_outlined),
+              //   ),
+              // )
+            ],
           ),
+          Container(
+            margin: EdgeInsets.only(top: proH(15)),
+            child: DefaultButton(
+              press: () {
+                setState(() {
+                  imageVaruthanulla();
+
+                  print(allMarker);
+                });
+              },
+              colored: Colors.redAccent,
+              text: "Refresh",
+            ),
+          )
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.location_searching),
-          onPressed: () {
-            getCurrentLocation();
-          }),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: proH(90.0)),
+        child: FloatingActionButton(
+            child: Icon(Icons.location_searching),
+            onPressed: () {
+              getCurrentLocation();
+            }),
+      ),
     );
   }
 }
