@@ -2,7 +2,7 @@
 
 #script i used in google sheet app scripter
 ```function doGet(request) {
-  var sheet =SpreadsheetApp.openById("1t0tnaPu8wkXuYNKxZbP3b-CV1ew799pcdYyWJ4Yry4M");
+  var sheet =SpreadsheetApp.openById("sheetid");
   var values =sheet.getActiveSheet().getDataRange().getValues();
   var data=[];
   try{
