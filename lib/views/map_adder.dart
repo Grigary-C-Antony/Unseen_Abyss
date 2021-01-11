@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flushbar/flushbar.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -135,9 +136,18 @@ class _MapAdderState extends State<MapAdder> {
                           child: DefaultButton(
                             text: "continue",
                             press: () {
-                              submitpost("marker_$lat$long",
-                                  "marker_id_$lat$long", lat, long);
-                              Navigator.pop(context);
+                              if (lat != null && long != null) {
+                                submitpost("marker_$lat$long",
+                                    "marker_id_$lat$long", lat, long);
+                                Navigator.pop(context);
+                                Flushbar(
+                                  flushbarPosition: FlushbarPosition.TOP,
+                                  title: "Location Added",
+                                  message:
+                                      "You have posted location at $lat,$long",
+                                  duration: Duration(seconds: 3),
+                                )..show(context);
+                              }
                             },
                             colored: Colors.blueAccent,
                           ),
